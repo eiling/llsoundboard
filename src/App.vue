@@ -76,7 +76,7 @@ export default {
     this.volumeSlider = this.$el.querySelector('#volume-slider')
     this.volumeSlider.value = this.audioVolume * 1000
 
-    fetch(window.cardDataJsonPath)
+    fetch('/llsoundboard/cardData.json')
         .then(res => {
           return res.json()
         })

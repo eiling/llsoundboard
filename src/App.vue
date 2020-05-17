@@ -30,7 +30,6 @@ import CardButton from '@/components/CardIcon'
 
 export default {
   name: 'App',
-  // eslint-disable-next-line vue/no-unused-components
   components: {CardButton},
   data() {
     return {
@@ -77,7 +76,7 @@ export default {
     this.volumeSlider = this.$el.querySelector('#volume-slider')
     this.volumeSlider.value = this.audioVolume * 1000
 
-    fetch('/cardData.json')
+    fetch(window.cardDataJsonPath)
         .then(res => {
           return res.json()
         })

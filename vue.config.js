@@ -1,9 +1,9 @@
-if (process.env.LLSOUNDBOARD_ENV === 'dev') {
+if (process.env.NODE_ENV === 'production') {
   module.exports = {
-    publicPath: '/'
+    publicPath: '/llsoundboard/',
   }
 } else {
   module.exports = {
-    publicPath: '/llsoundboard/'
+    publicPath: '/',
   }
 }

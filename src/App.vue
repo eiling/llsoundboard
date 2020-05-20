@@ -3,18 +3,43 @@
     <h1>SIF Skill Soundboard</h1>
     <h2>Resources from <a href="https://llsif.org/">llsif.org</a> by <a
         href="https://twitter.com/ShinyZura">ShinyZura</a></h2>
+    <!--TODO use router for this (but not for filters)-->
+    <div class="tabs">
+      Mode:
+      <button @click="setMode('CARDS')">Cards</button>
+      <button @click="setMode('VOICES')">Voices</button>
+    </div>
     <label class="volume-controls">
       <span>Volume: {{~~(audioVolume * 1000)}}/1000</span>
       <input id="volume-slider" type="range" min="0" max="1000" @input="changeVolume">
     </label>
-    <div class="card-container">
-      <card-button v-for="card in cards.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)"
-                   :key="card.cardId"
-                   :volume="audioVolume"
-                   :card-id="`${card.cardId}`"
-                   :skill-activation-voice="`${card.skillActivationVoice}`"
-      />
-    </div>
+    <template v-if="mode === 'CARDS'">
+      <!--TODO create card container component-->
+      <div class="card-container">
+        <card-button v-for="card in cards.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)"
+                     :key="card.cardId"
+                     :volume="audioVolume"
+                     :card-id="`${card.cardId}`"
+                     :idol-name="card.idolName"
+                     :skill-activation-voice-id="`${card.skillActivationVoiceId}`"
+                     :skill-activation-voice-text="card.skillActivationVoiceText"
+        />
+      </div>
+    </template>
+    <template v-else-if="mode === 'VOICES'">
+      <div class="voice-box-container">
+        <voice-box
+            v-for="voice in voices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)"
+            :key="voice.skillActivationVoiceId"
+            :skill-activation-voice-id="`${voice.skillActivationVoiceId}`"
+            :idol-name="voice.idolName"
+            :skill-activation-voice-text="voice.skillActivationVoiceText"
+            :card-ids="voice.cardIds"
+            :volume="audioVolume"
+        />
+      </div>
+    </template>
+    <!--TODO create pagination component-->
     <div class="pagination">
       <button class="arrow" @click="firstPage" :disabled="isFirstPage()">first</button>
       <button class="arrow" @click="previousPage" :disabled="isFirstPage()">previous</button>
@@ -32,10 +57,20 @@
 
 <script>
 import CardButton from '@/components/CardIcon'
+import VoiceBox from '@/components/VoiceBox'
+
+const modes = {
+  CARDS: {
+    itemsPerPage: 20,
+  },
+  VOICES: {
+    itemsPerPage: 5,
+  },
+}
 
 export default {
   name: 'App',
-  components: {CardButton},
+  components: {VoiceBox, CardButton},
   data() {
     return {
       cards: [],
@@ -44,11 +79,19 @@ export default {
       volumeSlider: null,
       audioVolume: .05,
       pageToJump: 1,
+      mode: 'CARDS',
+      voices: [],
     }
   },
   methods: {
     totalOfPages() {
-      return Math.ceil(this.cards.length / this.itemsPerPage)
+      if (this.mode === 'CARDS') {
+        return Math.ceil(this.cards.length / this.itemsPerPage)
+      }
+      if (this.mode === 'VOICES') {
+        return Math.ceil(this.voices.length / this.itemsPerPage)
+      }
+      return 1
     },
     isFirstPage() {
       return this.currentPage === 1
@@ -74,11 +117,17 @@ export default {
     },
     jumpToPage() {
       if (this.pageToJump >= 1 && this.pageToJump <= this.totalOfPages())
-      this.currentPage = this.pageToJump
+        this.currentPage = this.pageToJump
     },
     changeVolume() {
       if (this.volumeSlider) {
         this.audioVolume = this.volumeSlider.value / 1000
+      }
+    },
+    setMode(mode) {
+      this.mode = mode
+      if (mode in modes) {
+        this.itemsPerPage = modes[mode].itemsPerPage
       }
     },
   },
@@ -92,6 +141,25 @@ export default {
         })
         .then(obj => {
           this.cards.push(...obj)
+
+          const voicesTemp = {}
+          this.cards.forEach(e => {
+            if (e.skillActivationVoiceId in voicesTemp) {
+              voicesTemp[e.skillActivationVoiceId].cardIds.push(e.cardId)
+            } else {
+              voicesTemp[e.skillActivationVoiceId] = {
+                idolName: e.idolName,
+                skillActivationVoiceId: e.skillActivationVoiceId,
+                skillActivationVoiceText: e.skillActivationVoiceText,
+                cardIds: [e.cardId],
+              }
+            }
+          })
+          for (const p in voicesTemp) {
+            if ({}.hasOwnProperty.call(voicesTemp, p)) {
+              this.voices.push(voicesTemp[p])
+            }
+          }
         })
   },
 }
@@ -172,6 +240,16 @@ h2 > a:visited {
   margin: 1%;
   width: 128px;
   max-width: 23%;
+}
+
+.voice-box-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.voice-box-container > * {
+  width: 100%;
 }
 
 .pagination {

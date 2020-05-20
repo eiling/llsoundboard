@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <img :src="getIconUrl()" :alt="cardId" @click="playSound">
+    <img :src="getIconUrl()" :alt="cardId" :title="`${skillActivationVoiceText} - ${idolName}`" @click="playSound">
     <a :href="getSoundUrl()" @click="e => e.preventDefault()">#{{cardId}}</a>
     <audio>
       <source :src="getSoundUrl()">
@@ -13,7 +13,9 @@ export default {
   name: 'CardButton',
   props: {
     cardId: String,
-    skillActivationVoice: String,
+    idolName: String,
+    skillActivationVoiceId: String,
+    skillActivationVoiceText: String,
     volume: Number,
   },
   data() {
@@ -26,7 +28,7 @@ export default {
       return `https://s.llsif.org/jp/icons/${this.cardId}.png?${Date.now()}`
     },
     getSoundUrl() {
-      return `https://s.llsif.org/jp/voices/${this.skillActivationVoice}.ogg?${Date.now()}`
+      return `https://s.llsif.org/jp/voices/${this.skillActivationVoiceId}.ogg?${Date.now()}`
     },
     playSound() {
       this.audio.play()
